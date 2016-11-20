@@ -62,6 +62,7 @@ int Nyy;
 int Nzz;
 bool is_readString; //initialization from an existing string
 bool is_changeSize; //physical size of y direction is changing linearly
+double thresh_string_H; //thresh of energy to stop string iteration
 Model *pmodel;
 
 int main(int argc, char* argv[]){
@@ -72,6 +73,7 @@ int main(int argc, char* argv[]){
     maxT = cfg.get_integer("string","string_iteration");
     is_readString = cfg.get_bool("string", "is_readString");
     is_changeSize = cfg.get_bool("string", "is_changeSize");
+    thresh_string_H = cfg.get_double("string", "thresh_string_H");
     size_S = cfg.get_double("string", "size_S");
     size_E = cfg.get_double("string", "size_E");
     S.resize(maxT, m);
@@ -137,7 +139,7 @@ void run_string(string config_file) {
         st += 1;
     }
     //while(abs(F(st)-F(st-1))>1.0e-7 && st<maxT);
-    while(max(dH(st-1, all)) > 1.0e-5 && st<maxT);
+    while(max(dH(st-1, all)) > thresh_string_H && st<maxT);
 	
 }
 

@@ -56,6 +56,7 @@ int Nxx;    //grid size
 int Nyy;
 int Nzz;
 bool is_readString; //initialization from an existing string
+double thresh_string_H; //thresh of energy to stop string iteration
 Model *pmodel;
 
 int main(int argc, char* argv[]){
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]){
     m = cfg.get_integer("string","num_of_beads");
     maxT = cfg.get_integer("string","string_iteration");
     is_readString = cfg.get_bool("string", "is_readString");
+    thresh_string_H = cfg.get_double("string", "thresh_string_H");
     S.resize(maxT, m);
     H.resize(maxT, m);
     dH.resize(maxT, m);
@@ -114,8 +116,7 @@ void run_string(string config_file) {
         redistribute_stringBeads(st);
         st += 1;
     }
-    //while(abs(F(st)-F(st-1))>1.0e-7 && st<maxT);
-    while(max(dH(st-1, all)) > 1.0e-5 && st<maxT);
+    while(max(dH(st-1, all)) > thresh_string_H && st<maxT);
     
 	
 }

@@ -277,7 +277,21 @@ void run_scftInString_changingSize(int st) {
         //ini.LoadFile("./paramString.ini");
         //ini.SetDoubleValue("UnitCell", "a", stringSize(s));
         //cout << "aSize is " << ini.GetDoubleValue("UnitCell", "a") << endl;
-        cfg.a(stringSize(s));
+        switch (cfg.dim()) {
+            case 1:
+                cfg.a(stringSize(s)); 
+                break;
+            case 2:                     //size of 2nd dim is constant
+                cfg.a(stringSize(s)); 
+                break;
+            case 3:                     //size of 1st&3rd dim are constant
+                cfg.b(stringSize(s));
+                break;
+            default :
+                cout << "Please input correct dimension !" << endl;
+                break;
+        }
+        //cfg.a(stringSize(s));
         cfg.save(config_file); //this is necessary for write data from memory to disk
         if(cfg.model() == ModelType::AB) {
             spmodel = new Model_AB("./paramString.ini");

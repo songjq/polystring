@@ -63,7 +63,7 @@ int Nzz;
 bool is_readString; //initialization from an existing string
 bool is_changeSize; //physical size of y direction is changing linearly
 double thresh_string_H; //thresh of energy to stop string iteration
-Model *pmodel;
+Model *pmodel, *spmodel;
 
 int main(int argc, char* argv[]){
 	// the default configuration file is in the current working directory
@@ -105,11 +105,14 @@ int main(int argc, char* argv[]){
 
 void run_string(string config_file) {
 	blitz::Range all = blitz::Range::all();
-    if(!is_changeSize && cfg.model() == ModelType::AB) 
+    if(!is_changeSize && cfg.model() == ModelType::AB) {
         pmodel = new Model_AB(config_file);
-	//if(cfg.model() == ModelType::AB) {
-    //    pmodel = new Model_AB(config_file);
-    //}
+    } 
+    else {
+        cfg.set_grid_init_type(GridInitType::RANDOM_INIT);
+        cfg.save(config_file); //this is necessary for write data from memory to disk
+        spmodel = new Model_AB(config_file);
+    }
     int st = 0; //index of string iteration.
 	Nxx = cfg.Lx();
 	Nyy = cfg.Ly();
@@ -118,7 +121,6 @@ void run_string(string config_file) {
 	wb.resize(m, Nxx, Nyy, Nzz);
 	phia.resize(m, Nxx, Nyy, Nzz);
 	phib.resize(m, Nxx, Nyy, Nzz);
-
 	initialize_string();
     do {
         cout << "**************************************************" << endl;
@@ -241,10 +243,6 @@ void save_data() {
 
 void run_scftInString(int st) {  //scft calcuation along one string
 	blitz::Range all = blitz::Range::all();
-	//Model *pmodel;
-    //if(cfg.model() == ModelType::AB) {
-    //    pmodel = new Model_AB(config_file);
-    //}
 	for (int s=0; s<m; s++) {
 		cout << endl;
 		cout << "**************************************************" << endl;
@@ -266,15 +264,12 @@ void run_scftInString(int st) {  //scft calcuation along one string
     	wb(s, all, all, all) = tmp(1, all, all, all);
     	phia(s, all, all, all) = tmp(2, all, all, all);
     	phib(s, all, all, all) = tmp(3, all, all, all);
-
-    	//pmodel->release_memory_string();
 	}
 }
 
 void run_scftInString_changingSize(int st) {
     blitz::Range all = blitz::Range::all();
     for (int s=0; s<m; s++) {
-        Model *spmodel;
         switch (cfg.dim()) {
             case 1:
                 cfg.a(stringSize(s)); 
@@ -289,18 +284,14 @@ void run_scftInString_changingSize(int st) {
                 cout << "Please input correct dimension !" << endl;
                 break;
         }
+        cfg.set_grid_init_type(GridInitType::DATA_INIT); //force to initialize field with data style
         cfg.save(config_file); //this is necessary for write data from memory to disk
-        if(cfg.model() == ModelType::AB) {
-            spmodel = new Model_AB(config_file, Nxx, Nyy, Nzz, wa(s,all,all,all), wb(s,all,all,all));
-        }
+        spmodel->resetInString(config_file, Nxx, Nyy, Nzz, wa(s,all,all,all), wb(s,all,all,all));
         cout << endl;
         cout << "**************************************************" << endl;
         cout << "scft running of " << s+1 << "th bead" << endl;
         cout << "**************************************************" << endl;
         cout << endl;
-        //spmodel->input_AField(wa(s,all,all,all));  //field initialization of single scft calculation
-        //spmodel->input_BField(wb(s,all,all,all));
-        //spmodel->init_data_field();
         scft sim(config_file, spmodel);
         sim.run(); 
         H(st, s) = spmodel->H();
@@ -313,9 +304,6 @@ void run_scftInString_changingSize(int st) {
         wb(s, all, all, all) = tmp(1, all, all, all);
         phia(s, all, all, all) = tmp(2, all, all, all);
         phib(s, all, all, all) = tmp(3, all, all, all);
-        spmodel->release_memory_string(); //necessary to ingore memory leak
-
-        delete spmodel;
     }
 }
 
@@ -328,8 +316,6 @@ void parameterize_string(int st) {
 		blitz::Array<double, 3> tmp((wa(s, all, all, all)-wa(s-1, all, all, all)) * (wa(s, all, all, all)-wa(s-1, all, all, all)));
 		Grid g(uc, Nxx, Nyy, Nzz, tmp);
 		arcLength = sqrt(g.quadrature());
-		//w(s) = (H(s-1)+H(s))/2.0/sum; //weighting function of arc length: w(s) = 2H/sum(2H), where 2H=(H(s-1)+H(s))/2.0
-		//arcLength *= w(s);
         cout << "arcLength = " << arcLength << endl;
 		S(st, s) = S(st, s-1) + arcLength;
 	}

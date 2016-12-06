@@ -27,6 +27,16 @@ void Model_AB::reset(const string& config_data){
     init();
 }
 
+void Model_AB::resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> w1, blitz::Array<double, 3> w2){
+    release_memory();
+    _cfg.reload_from_file(config_data);
+    waa.resize(Lx, Ly, Lz);
+    wbb.resize(Lx, Ly, Lz);
+    waa = w1;
+    wbb = w2;
+    init();
+}
+
 void Model_AB::init(){
     is_compressible = _cfg.is_compressible();
 
@@ -74,7 +84,6 @@ void Model_AB::init(){
     lamA = lam(0);
     lamB = lam(1);
     lamYita = lam(2);
-
     init_field();
     init_density();
     init_propagator();

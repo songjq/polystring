@@ -54,6 +54,7 @@ public:
 
 	void init();
     void reset(const string& config_data);
+    void resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> w1, blitz::Array<double, 3> w2);
 
 	void update();
     double Hw() const;

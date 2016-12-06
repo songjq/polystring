@@ -49,6 +49,8 @@ class Model_AB:public Model{
 public:
     Model_AB(){}
 	Model_AB(const string config_file);
+	Model_AB(const string config_file, int Lx, int Ly, int Lz,
+			 blitz::Array<double, 3> w1, blitz::Array<double, 3> w2);
 
 	void init();
     void reset(const string& config_data);
@@ -96,8 +98,7 @@ private:
     double lamA, lamB, lamYita;
     arma::uword sA, sB;
     double fA_shiftvalue;  //added by songjq in 20141103
-    blitz::Array<double, 3> waa; //added by songjq for string method in 20161001
-    blitz::Array<double, 3> wbb; //added by songjq for string method in 20161001
+    blitz::Array<double, 3> waa, wbb; //added by songjq for string method in 20161001
 
     Field *wA, *wB;     // will not be initialized for Anderson mixing
     FieldAX *wAx, *wBx;   // will not be initialized for non-Anderson mixing

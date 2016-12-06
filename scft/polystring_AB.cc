@@ -86,7 +86,7 @@ int main(int argc, char* argv[]){
         stringSize(s) = size_S + 1.0*s/(m-1)*(size_E - size_S);
     }
     if(is_changeSize) 
-        cout << "X physical size along the string is \n" << stringSize << endl;
+        cout << "X or Y physical size along the string is \n" << stringSize << endl;
     // Specify configuration file through input arguments.
     if(argc > 1){
         config_file = argv[1];
@@ -105,9 +105,11 @@ int main(int argc, char* argv[]){
 
 void run_string(string config_file) {
 	blitz::Range all = blitz::Range::all();
-	if(cfg.model() == ModelType::AB) {
+    if(!is_changeSize && cfg.model() == ModelType::AB) 
         pmodel = new Model_AB(config_file);
-    }
+	//if(cfg.model() == ModelType::AB) {
+    //    pmodel = new Model_AB(config_file);
+    //}
     int st = 0; //index of string iteration.
 	Nxx = cfg.Lx();
 	Nyy = cfg.Ly();
@@ -124,8 +126,9 @@ void run_string(string config_file) {
         cout << "**************************************************" << endl;
         if(is_changeSize)
             run_scftInString_changingSize(st);
-        else
+        else 
             run_scftInString(st);
+
         F(st) = mean(H(st, all));
         if(st>0)
             dH(st, all) = abs(H(st, all)-H(st-1, all));
@@ -181,7 +184,6 @@ void initialize_string() {
     	wb = input_data4("wb", "stringData.mat");
     	phia = input_data4("phia", "stringData.mat");
     	phib = input_data4("phib", "stringData.mat");
-    	cout << "153" << endl;
     }
     else {
     	cout << "Inilializing string by two ends!" << endl;
@@ -273,10 +275,6 @@ void run_scftInString_changingSize(int st) {
     blitz::Range all = blitz::Range::all();
     for (int s=0; s<m; s++) {
         Model *spmodel;
-        //CSimpleIniCaseA ini;
-        //ini.LoadFile("./paramString.ini");
-        //ini.SetDoubleValue("UnitCell", "a", stringSize(s));
-        //cout << "aSize is " << ini.GetDoubleValue("UnitCell", "a") << endl;
         switch (cfg.dim()) {
             case 1:
                 cfg.a(stringSize(s)); 
@@ -291,19 +289,18 @@ void run_scftInString_changingSize(int st) {
                 cout << "Please input correct dimension !" << endl;
                 break;
         }
-        //cfg.a(stringSize(s));
         cfg.save(config_file); //this is necessary for write data from memory to disk
         if(cfg.model() == ModelType::AB) {
-            spmodel = new Model_AB("./paramString.ini");
+            spmodel = new Model_AB(config_file, Nxx, Nyy, Nzz, wa(s,all,all,all), wb(s,all,all,all));
         }
         cout << endl;
         cout << "**************************************************" << endl;
         cout << "scft running of " << s+1 << "th bead" << endl;
         cout << "**************************************************" << endl;
         cout << endl;
-        spmodel->input_AField(wa(s,all,all,all));  //field initialization of single scft calculation
-        spmodel->input_BField(wb(s,all,all,all));
-        spmodel->init_data_field();
+        //spmodel->input_AField(wa(s,all,all,all));  //field initialization of single scft calculation
+        //spmodel->input_BField(wb(s,all,all,all));
+        //spmodel->init_data_field();
         scft sim(config_file, spmodel);
         sim.run(); 
         H(st, s) = spmodel->H();

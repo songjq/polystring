@@ -6,6 +6,14 @@ using namespace arma;
 using namespace std;
 
 Model_AB::Model_AB(const string config_file):Model(config_file){
+    cout << "Model(string) constructor...\n";
+    init();
+}
+
+Model_AB::Model_AB(const string config_file, int Lx, int Ly, int Lz, blitz::Array<double, 3> w1, blitz::Array<double, 3> w2): 
+                    Model(config_file), waa(Lx, Ly, Lz), wbb(Lx, Ly, Lz) {
+    waa = w1;
+    wbb = w2;
     init();
 }
 
@@ -73,6 +81,7 @@ void Model_AB::init(){
 }
 
 void Model_AB::update(){
+    blitz::Range all = blitz::Range::all();
     if(_cfg.algo_scft_type() == AlgorithmSCFTType::ANDERSON){
         qA->update(*wAx);
         qB->set_head( qA->get_tail() );
@@ -83,6 +92,45 @@ void Model_AB::update(){
         qAc->update(*wAx);
     }
     else{
+        /****************************NBC by PBC****************************************/
+        string confine_mold = _cfg.get_string("Grid", "confine_mold");
+        if(_cfg.ctype() == ConfineType::NONE && confine_mold == "NBC_by_PBC") {
+            int Nx = phiA->Lx();
+            int Ny = phiA->Ly();
+            int Nz = phiA->Lz();
+            blitz::Array<double, 3> wa(wA->data());
+            blitz::Array<double, 3> wb(wB->data());
+            switch (_cfg.dim()) {
+                case 1 :
+                {
+                    blitz::Array<double, 3> w1(wa(Range(0, Nx/2-1), all, all));
+                    blitz::Array<double, 3> w2(wb(Range(0, Nx/2-1), all, all));
+                    wa(Range(Nx/2, Nx-1), all, all) = w1.reverse(blitz::firstDim);
+                    wb(Range(Nx/2, Nx-1), all, all) = w2.reverse(blitz::firstDim);
+                    break;
+                }
+                case 2 :
+                {
+                    blitz::Array<double, 3> w1(wa(all, Range(0, Ny/2-1), all));
+                    blitz::Array<double, 3> w2(wb(all, Range(0, Ny/2-1), all));
+                    wa(all, Range(Ny/2, Ny-1), all) = w1.reverse(blitz::secondDim);
+                    wb(all, Range(Ny/2, Ny-1), all) = w2.reverse(blitz::secondDim);
+                    break;
+                }
+                case 3 :
+                {
+                    blitz::Array<double, 3> w1(wa(all, all, Range(0, Nz/2-1)));
+                    blitz::Array<double, 3> w2(wb(all, all, Range(0, Nz/2-1)));
+                    wa(all, all, Range(Nz/2, Nz-1)) = w1.reverse(blitz::thirdDim);
+                    wb(all, all, Range(Nz/2, Nz-1)) = w2.reverse(blitz::thirdDim);
+                    break;
+                }
+                default :
+                    cout << "Please input correct dimension!" << endl;
+                    break;
+            }
+        }
+        /********************************************************************************/
         qA->update(*wA);
         qB->set_head( qA->get_tail() );
         qB->update(*wB);
@@ -574,7 +622,6 @@ void Model_AB::input_BField(blitz::Array<double, 3> data) {
 void Model_AB::input_CField(blitz::Array<double, 3> data) {} //means nothing
 
 void Model_AB::init_data_field() {
-    cout << "init_data_field" << endl;
     wA = new Field("wA", _cfg, waa, lamA);
     wB = new Field("wB", _cfg, wbb, lamB);
 }
@@ -593,10 +640,12 @@ void Model_AB::init_field(){
             break;
         case GridInitType::PATTERN_INIT:
             init_pattern_field();
-        case GridInitType::DATA_INIT:  // added by songjq for string method in 20161001
-            cout << "Data initialization now!" << endl;
-            //init_data_field();
-            break;
+        case GridInitType::DATA_INIT:  // this GridInitType is for string method only!
+            {
+              if(_cfg.get_bool("string", "is_changeSize"))
+                  init_data_field();
+              break;
+            }
         default:
             cerr<<"Unkonwn or unsupported grid init type!"<<endl;
             exit(1);

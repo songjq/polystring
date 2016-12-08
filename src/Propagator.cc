@@ -101,7 +101,7 @@ double Propagator::ds() const{
 }
 
 Propagator::~Propagator(){
-    //delete _updater;
+    delete _updater;
 }
 
 void Propagator::set_updater(Updater *up){

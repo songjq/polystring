@@ -27,7 +27,7 @@ void Model_AB::reset(const string& config_data){
     init();
 }
 
-void Model_AB::resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> w1, blitz::Array<double, 3> w2){
+void Model_AB::resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2){
     release_memory();
     _cfg.reload_from_file(config_data);
     waa.resize(Lx, Ly, Lz);
@@ -616,19 +616,19 @@ void Model_AB::init_pattern_field(){
     }
 }
 
-void Model_AB::input_AField(blitz::Array<double, 3> data) {
+void Model_AB::input_AField(blitz::Array<double, 3>  &data) {
     cout << "initialize A Field" << endl;
     waa.resize(_cfg.Lx(), _cfg.Ly(), _cfg.Lz());
     waa = data;
 }
 
-void Model_AB::input_BField(blitz::Array<double, 3> data) {
+void Model_AB::input_BField(blitz::Array<double, 3> &data) {
     cout << "initialize B Field" << endl;
     wbb.resize(_cfg.Lx(), _cfg.Ly(), _cfg.Lz());
     wbb = data;
 }
 
-void Model_AB::input_CField(blitz::Array<double, 3> data) {} //means nothing
+void Model_AB::input_CField(blitz::Array<double, 3> &data) {} //means nothing
 
 void Model_AB::init_data_field() {
     wA = new Field("wA", _cfg, waa, lamA);

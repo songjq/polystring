@@ -62,13 +62,13 @@ public:
     virtual void save_field(const string file)=0;
     virtual void save_density(const string file)=0;
     virtual void save_q(const string file)=0;
-    virtual void input_AField(blitz::Array<double, 3>) = 0;  //added by songjq for string method in 20161001
-    virtual void input_BField(blitz::Array<double, 3>) = 0;  //added by songjq for string method in 20161001
-    virtual void input_CField(blitz::Array<double, 3>) = 0;  //added by songjq for string method in 20161008
+    virtual void input_AField(blitz::Array<double, 3> &) = 0;  //added by songjq for string method in 20161001
+    virtual void input_BField(blitz::Array<double, 3> &) = 0;  //added by songjq for string method in 20161001
+    virtual void input_CField(blitz::Array<double, 3> &) = 0;  //added by songjq for string method in 20161008
     virtual void init_data_field() = 0; //added by songjq for string method in 20161001
     virtual blitz::Array<double, 4> output_data() = 0; //added by songjq for string method in 20161001
     virtual void release_memory_string()=0;
-    virtual void resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> w1, blitz::Array<double, 3> w2) = 0;
+    virtual void resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2) = 0;
 
 protected:
     virtual void init_field()=0;

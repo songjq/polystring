@@ -54,7 +54,7 @@ public:
 
 	void init();
     void reset(const string& config_data);
-    void resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> w1, blitz::Array<double, 3> w2);
+    void resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2);
 
 	void update();
     double Hw() const;
@@ -72,9 +72,9 @@ public:
     void save_field(const string file);
     void save_density(const string file);
     void save_q(const string file);
-    void input_AField(blitz::Array<double, 3>); //added by songjq for string method in 20161001
-    void input_BField(blitz::Array<double, 3>); //added by songjq for string method in 20161001
-    void input_CField(blitz::Array<double, 3>); //means nothing just to compile Model.h
+    void input_AField(blitz::Array<double, 3> &); //added by songjq for string method in 20161001
+    void input_BField(blitz::Array<double, 3> &); //added by songjq for string method in 20161001
+    void input_CField(blitz::Array<double, 3> &); //means nothing just to compile Model.h
     void release_memory_string();
 
     ~Model_AB();

@@ -48,7 +48,7 @@ Array<double, 4> input_data4(string, string);
 
 int m; //number of beads on string.
 int maxT; //max iteration of string.
-double size_S, size_E; //physical size of y direction at ends of string, available only for 2D system.
+double size_S, size_E; //physical size of x direction at ends of string, available only for 2D system.
 string config_file = "paramString.ini";
 Config cfg(config_file.c_str());
 Array<double, 2> S; //string nodes
@@ -56,19 +56,17 @@ Array<double, 2> H; //free energy of each node.
 Array<double, 2> dH; //energy difference between two string iteration of each notes
 Array<double, 1> stringSize;
 Array<double, 1> F; //whole free energy of one string
+Array<double, 3> w1, w2;
 Array<double, 4> wa, wb, phia, phib; //field and density data in each string node.
 int Nxx;    //grid size
 int Nyy;
 int Nzz;
 bool is_readString; //initialization from an existing string
-bool is_changeSize; //physical size of y direction is changing linearly
+bool is_changeSize; //physical size of x direction is changing linearly
 double thresh_string_H; //thresh of energy to stop string iteration
 Model *pmodel, *spmodel;
 
 int main(int argc, char* argv[]){
-	// the default configuration file is in the current working directory
-    //string config_file = "paramString.ini";
-    //Config cfg(config_file.c_str());
     m = cfg.get_integer("string","num_of_beads");
     maxT = cfg.get_integer("string","string_iteration");
     is_readString = cfg.get_bool("string", "is_readString");
@@ -109,7 +107,7 @@ void run_string(string config_file) {
         pmodel = new Model_AB(config_file);
     } 
     else {
-        cfg.set_grid_init_type(GridInitType::RANDOM_INIT);
+        cfg.set_grid_init_type(GridInitType::RANDOM_INIT); //to avoid DATA_INIT in model construction
         cfg.save(config_file); //this is necessary for write data from memory to disk
         spmodel = new Model_AB(config_file);
     }
@@ -117,6 +115,8 @@ void run_string(string config_file) {
 	Nxx = cfg.Lx();
 	Nyy = cfg.Ly();
 	Nzz = cfg.Lz();
+    w1.resize(Nxx, Nyy, Nzz);
+    w2.resize(Nxx, Nyy, Nzz);
 	wa.resize(m, Nxx, Nyy, Nzz);
 	wb.resize(m, Nxx, Nyy, Nzz);
 	phia.resize(m, Nxx, Nyy, Nzz);
@@ -249,8 +249,10 @@ void run_scftInString(int st) {  //scft calcuation along one string
 		cout << "scft running of " << s+1 << "th bead" << endl;
 		cout << "**************************************************" << endl;
 		cout << endl;
-		pmodel->input_AField(wa(s,all,all,all));  //field initialization of single scft calculation
-    	pmodel->input_BField(wb(s,all,all,all));
+        w1 = wa(s,all,all,all);
+        w2 = wb(s,all,all,all);
+		pmodel->input_AField(w1);  //field initialization of single scft calculation
+    	pmodel->input_BField(w2);
     	pmodel->init_data_field();
     	scft sim(config_file, pmodel);
     	sim.run(); 
@@ -286,7 +288,9 @@ void run_scftInString_changingSize(int st) {
         }
         cfg.set_grid_init_type(GridInitType::DATA_INIT); //force to initialize field with data style
         cfg.save(config_file); //this is necessary for write data from memory to disk
-        spmodel->resetInString(config_file, Nxx, Nyy, Nzz, wa(s,all,all,all), wb(s,all,all,all));
+        w1 = wa(s,all,all,all);
+        w2 = wb(s,all,all,all);
+        spmodel->resetInString(config_file, Nxx, Nyy, Nzz, w1, w2);
         cout << endl;
         cout << "**************************************************" << endl;
         cout << "scft running of " << s+1 << "th bead" << endl;
@@ -342,6 +346,5 @@ void redistribute_stringBeads(int st) {
           for (int z=0; z<m; z++) {
             wb(z, i, j, k) = cs(1.0*z/(m-1));
           }
-        }
-          
+        }        
 }

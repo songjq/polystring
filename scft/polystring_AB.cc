@@ -58,6 +58,7 @@ Array<double, 1> stringSize;
 Array<double, 1> F; //whole free energy of one string
 Array<double, 3> w1, w2;
 Array<double, 4> wa, wb, phia, phib; //field and density data in each string node.
+Array<double, 4> wae, wbe, phiae, phibe; //store ends data
 int Nxx;    //grid size
 int Nyy;
 int Nzz;
@@ -121,6 +122,10 @@ void run_string(string config_file) {
 	wb.resize(m, Nxx, Nyy, Nzz);
 	phia.resize(m, Nxx, Nyy, Nzz);
 	phib.resize(m, Nxx, Nyy, Nzz);
+	wae.resize(2, Nxx, Nyy, Nzz);
+	wbe.resize(2, Nxx, Nyy, Nzz);
+	phiae.resize(2, Nxx, Nyy, Nzz);
+	phibe.resize(2, Nxx, Nyy, Nzz);
 	initialize_string();
     do {
         cout << "**************************************************" << endl;
@@ -138,9 +143,10 @@ void run_string(string config_file) {
         cout << "dH = " << dH(st, all) << endl;
         cout << "F = " << F(st) << endl;
         parameterize_string(st);
-        save_data();
+        //save_data();
         cout << "S = " << S(st, all) << endl;
         redistribute_stringBeads(st);
+        save_data();
         st += 1;
     }
     //while(abs(F(st)-F(st-1))>1.0e-7 && st<maxT);
@@ -207,6 +213,15 @@ void initialize_string() {
         	phib(i, all, all, all) = phib(0, all, all, all) + 1.0*i/(m-1)* (phib(m-1, all, all, all) - phib(0, all, all, all));
     	}
     }
+    cout << "store ends data now...\n";
+    wae(0, all, all, all) = wa(0, all, all, all);
+    wbe(0, all, all, all) = wb(0, all, all, all);
+    phiae(0, all, all, all) = phia(0, all, all, all);
+    phibe(0, all, all, all) = phib(0, all, all, all);
+    wae(1, all, all, all) = wa(m-1, all, all, all);
+    wbe(1, all, all, all) = wb(m-1, all, all, all);
+    phiae(1, all, all, all) = phia(m-1, all, all, all);
+    phibe(1, all, all, all) = phib(m-1, all, all, all);
 }
 
 void save_data() {
@@ -327,6 +342,7 @@ void parameterize_string(int st) {
 }
 
 void redistribute_stringBeads(int st) {
+	blitz::Range all = blitz::Range::all();
 	std::vector<double> X(m), Ya(m), Yb(m);  //for cublic spline interpolation
     tk::spline cs;  
     for (int i=0; i<Nxx; i++)
@@ -346,5 +362,14 @@ void redistribute_stringBeads(int st) {
           for (int z=0; z<m; z++) {
             wb(z, i, j, k) = cs(1.0*z/(m-1));
           }
-        }        
+        }  
+    cout << "return ends data to string after interpolation...\n";
+    wa(0, all, all, all) = wae(0, all, all, all); //prevent polluting ends in the process of interpolation
+    wb(0, all, all, all) = wbe(0, all, all, all);
+    phia(0, all, all, all) = phiae(0, all, all, all);
+    phib(0, all, all, all) = phibe(0, all, all, all);
+    wa(m-1, all, all, all) = wae(1, all, all, all);
+    wb(m-1, all, all, all) = wbe(1, all, all, all);
+    phia(m-1, all, all, all) = phiae(1, all, all, all);
+    phib(m-1, all, all, all) = phibe(1, all, all, all);      
 }

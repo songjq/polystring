@@ -41,7 +41,7 @@ void parameterize_string(int);
 void redistribute_stringBeads(int);
 void save_data();
 void run_scftInString(int);
-void run_scftInString(int);
+void run_scftInString_changingSize(int);
 Array<double, 3> input_data3(string, string);
 Array<double, 4> input_data4(string, string);
 
@@ -65,7 +65,7 @@ int Nzz;
 bool is_readString; //initialization from an existing string
 bool is_changeSize; //physical size of x direction is changing linearly
 double thresh_string_H; //thresh of energy to stop string iteration
-Model *spmodel;
+Model *pmodel, *spmodel;
 
 int main(int argc, char* argv[]){
     m = cfg.get_integer("string","num_of_beads");
@@ -81,16 +81,11 @@ int main(int argc, char* argv[]){
     dH = 10.0;
     stringSize.resize(m);
     F.resize(maxT);
-    if(is_changeSize) {
-    	for (int s=0; s<m; s++) {
-        	stringSize(s) = size_S + 1.0*s/(m-1)*(size_E - size_S);
-    	}	
+    for (int s=0; s<m; s++) {
+        stringSize(s) = size_S + 1.0*s/(m-1)*(size_E - size_S);
     }
-    else 
-    	stringSize = cfg.a();
-    
-    //if(is_changeSize) 
-    cout << "X or Y physical size along the string is \n" << stringSize << endl;
+    if(is_changeSize) 
+        cout << "X or Y physical size along the string is \n" << stringSize << endl;
     // Specify configuration file through input arguments.
     if(argc > 1){
         config_file = argv[1];
@@ -109,10 +104,16 @@ int main(int argc, char* argv[]){
 
 void run_string(string config_file) {
 	blitz::Range all = blitz::Range::all();
-    cfg.set_grid_init_type(GridInitType::RANDOM_INIT); //to avoid DATA_INIT in model construction
-    cfg.save(config_file); //this is necessary for write data from memory to disk
-    spmodel = new Model_AB(config_file);
-
+    if(!is_changeSize && cfg.model() == ModelType::AB) {
+    	//cfg.set_grid_init_type(GridInitType::RANDOM_INIT); //to avoid DATA_INIT in model construction
+        //cfg.save(config_file);
+        pmodel = new Model_AB(config_file);
+    } 
+    else {
+        cfg.set_grid_init_type(GridInitType::RANDOM_INIT); //to avoid DATA_INIT in model construction
+        cfg.save(config_file); //this is necessary for write data from memory to disk
+        spmodel = new Model_AB(config_file);
+    }
     int st = 0; //index of string iteration.
 	Nxx = cfg.Lx();
 	Nyy = cfg.Ly();
@@ -132,8 +133,10 @@ void run_string(string config_file) {
         cout << "**************************************************" << endl;
         cout << "This is the " << st << "th string iteration!" << endl;
         cout << "**************************************************" << endl;
-
-        run_scftInString(st);
+        if(is_changeSize)
+            run_scftInString_changingSize(st);
+        else 
+            run_scftInString(st);
 
         F(st) = mean(H(st, all));
         if(st>0)
@@ -142,6 +145,7 @@ void run_string(string config_file) {
         cout << "dH = " << dH(st, all) << endl;
         cout << "F = " << F(st) << endl;
         parameterize_string(st);
+        //save_data();
         cout << "S = " << S(st, all) << endl;
         redistribute_stringBeads(st);
         save_data();
@@ -254,7 +258,38 @@ void save_data() {
     mat.matRelease();
 }
 
-void run_scftInString(int st) {
+void run_scftInString(int st) {  //scft calcuation along one string
+	blitz::Range all = blitz::Range::all();
+	for (int s=0; s<m; s++) {
+		cout << endl;
+		cout << "**************************************************" << endl;
+		cout << "scft running of " << s+1 << "th bead" << endl;
+		cout << "**************************************************" << endl;
+		cout << endl;
+        w1 = wa(s,all,all,all);
+        w2 = wb(s,all,all,all);
+		pmodel->input_AField(w1);  //field initialization of single scft calculation
+    	pmodel->input_BField(w2);
+    	pmodel->init_data_field();
+    	//cfg.set_grid_init_type(GridInitType::DATA_INIT); //force to initialize field with data style
+        //cfg.save(config_file); //this is necessary for write data from memory to disk
+    	//pmodel->resetInString(config_file, Nxx, Nyy, Nzz, w1, w2);
+    	scft sim(config_file, pmodel);
+    	sim.run(); 
+        H(st,s) = pmodel->H();
+
+    	cout << endl;
+    	cout << "saving data now ..." << endl;
+    	cout << endl;
+    	blitz::Array<double, 4> tmp(pmodel->output_data()); 
+    	wa(s, all, all, all) = tmp(0, all, all, all);  //write the  scft results after 5 iterations into arrays
+    	wb(s, all, all, all) = tmp(1, all, all, all);
+    	phia(s, all, all, all) = tmp(2, all, all, all);
+    	phib(s, all, all, all) = tmp(3, all, all, all);
+	}
+}
+
+void run_scftInString_changingSize(int st) {
     blitz::Range all = blitz::Range::all();
     for (int s=0; s<m; s++) {
         switch (cfg.dim()) {

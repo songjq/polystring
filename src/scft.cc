@@ -332,6 +332,7 @@ double scft::solve_scft_string(double a, double b, double c){
     return F;
 }
 
+
 double scft::solve_scft(double a, double b, double c){
     blitz::Range all = blitz::Range::all();
     if(_num_scft > 0)
@@ -361,8 +362,8 @@ void scft::reset_model(double a, double b, double c){
     _cfg.a(a);
     _cfg.b(b);
     _cfg.c(c);
-    //_cfg.set_grid_init_type(GridInitType::FILE_INIT);
-    _cfg.set_field_data_file(prev_data_file);
+    _cfg.set_grid_init_type(GridInitType::DATA_INIT);
+    //_cfg.set_field_data_file(prev_data_file);
     // it is necessary to use uc.lx, uc.ly, uc.lz instead of
     // uc.a, uc.b, uc.c or a, b, c to correctly handle
     // 1D and 2D situations.
@@ -389,13 +390,11 @@ void scft::relax(){
         s = _cfg.base_dir() + DEFAULT_DATA_FILE;
     else
         s = _cfg.base_dir() + _cfg.data_file();
-
     t_0 = clock();
     t_b = t_0;
     for(int i=1; i<=_cfg.max_iter(); i++){
         _iter = i;
         _pmodel->update();
-
         if(_cfg.is_display() && i%_cfg.display_interval() == 0){
             t_e = clock();
             t = static_cast<double>(t_e - t_b) / CLOCKS_PER_SEC;

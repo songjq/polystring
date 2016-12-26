@@ -58,7 +58,7 @@ public:
 	scft(const string config_file, Model* pmodel);
     void run();
     double solve_scft_string(double a, double b, double c);  // save with sovle_scft_string(double, douboe, douboe) but public, not used.
-
+    
 private:
     Config _cfg;
     //SCFTParam _scftp;

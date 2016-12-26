@@ -33,6 +33,8 @@ Field::Field(const string name, const Config &cfg, const double lam,
 
 }
 
+Field::~Field() {}
+
 Field& Field::operator= (const Grid &rhs){
     Grid::operator=(rhs);
     return *this;

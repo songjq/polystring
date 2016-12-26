@@ -69,6 +69,7 @@ public:
     double Q(const double N) const;
     blitz::Array<double, 3> ws();
     blitz::Array<double, 3> ws() const;
+    ~Field();
 private:
     double _lambda; // relaxation parameter
 };

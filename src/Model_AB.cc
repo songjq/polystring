@@ -148,13 +148,11 @@ void Model_AB::update(){
         qAc->set_head( qBc->get_tail() );
         qAc->update(*wA);
     }
-
     double Q = qB->Qt();
     phiA->set_cc(1.0/Q);
     phiA->update(*qA, *qAc);
     phiB->set_cc(1.0/Q);
     phiB->update(*qB, *qBc);
-
     /**
      * It is essential to combine A and B blocks to prodcue
      * Anderson mixing coefficient C.
@@ -651,8 +649,7 @@ void Model_AB::init_field(){
             init_pattern_field();
         case GridInitType::DATA_INIT:  // this GridInitType is for string method only!
             {
-              if(_cfg.get_bool("string", "is_changeSize"))
-                  init_data_field();
+              init_data_field();
               break;
             }
         default:

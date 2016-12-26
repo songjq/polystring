@@ -81,6 +81,8 @@ public:
 	Grid(const string name, const Config &cfg,
          const double low, const double high, const size_t seed=0);
 
+    ~Grid();
+
     Grid & operator= (const Grid &rhs);
 
     blitz::Array<double,3> data();

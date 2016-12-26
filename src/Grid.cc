@@ -121,6 +121,8 @@ Grid::Grid(const string name, const Config &cfg,
     set_value(seed, low, high);
 }
 
+Grid::~Grid() {}
+
 /**
  * Assignment operator must be explicitly defined because the assignment
  * operator of `blitz::Array` does not work properly.

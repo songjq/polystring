@@ -28,13 +28,22 @@ void Model_AB::reset(const string& config_data){
 }
 
 void Model_AB::resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2){
-    release_memory();
+    bool is_changeSize = _cfg.get_bool("string", "is_changeSize");
+    if(is_changeSize)
+        release_memory();
+    else {
+        delete wA;
+        delete wB;
+    }
     _cfg.reload_from_file(config_data);
     waa.resize(Lx, Ly, Lz);
     wbb.resize(Lx, Ly, Lz);
     waa = w1;
     wbb = w2;
-    init();
+    if(is_changeSize)
+        init();
+    else 
+        init_field();
 }
 
 void Model_AB::init(){
@@ -520,6 +529,8 @@ void Model_AB::release_memory_string(){
         delete ppropupA;
         delete ppropupB;
     }
+    //delete ppropupA;
+    //delete ppropupB;
 }
 
 void Model_AB::release_memory(){
@@ -531,8 +542,9 @@ void Model_AB::release_memory(){
         delete wA;
         delete wB;
     }
-    if(!is_compressible)
+    if(!is_compressible) {
         delete yita;
+    }
     delete phiA;
     delete phiB;
     delete qA;
@@ -541,7 +553,10 @@ void Model_AB::release_memory(){
     delete qBc;
     if(_cfg.ctype() != ConfineType::NONE
        || (_cfg.algo_mde_type() == AlgorithmMDEType::ETDRK4
-           && _cfg.etdrk4_M() > 0)){
+           && _cfg.etdrk4_M() <= 0)){
+        cout << "No ppropupAB\n";
+    }
+    else {
         delete ppropupA;
         delete ppropupB;
     }

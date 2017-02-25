@@ -132,9 +132,7 @@ void run_string(string config_file) {
         cout << "**************************************************" << endl;
         cout << "This is the " << st << "th string iteration!" << endl;
         cout << "**************************************************" << endl;
-
         run_scftInString(st);
-
         F(st) = mean(H(st, all));
         if(st>0)
             dH(st, all) = abs(H(st, all)-H(st-1, all));
@@ -255,6 +253,7 @@ void save_data() {
 }
 
 void run_scftInString(int st) {
+	cout << "polystring_AB.cc_258\n";
     blitz::Range all = blitz::Range::all();
     for (int s=0; s<m; s++) {
         switch (cfg.dim()) {

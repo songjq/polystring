@@ -64,6 +64,7 @@ bool Config::save(const string config_file){
     return !(rc < 0);
 }
 
+
 bool Config::reload_from_file(const string config_file){
     clear();
     SI_Error rc = _ini.LoadFile(config_file.c_str());

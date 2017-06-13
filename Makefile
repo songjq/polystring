@@ -1,7 +1,7 @@
 BASEDIR = build
 LOUTDIR = $(BASEDIR)/lib
 LOUT = $(LOUTDIR)/liborder.a
-MNANE = polystring_AB
+MNANE = polystring_ABC
 MOUTDIR = $(BASEDIR)/bin
 MOUT = $(MOUTDIR)/$(MNANE)
 ODIR = $(BASEDIR)/src

@@ -27,7 +27,11 @@ void Model_AB::reset(const string& config_data){
     init();
 }
 
-void Model_AB::resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2){
+/*void Model_AB::resetInString(stringSize, st, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2){
+    //_cfg.loadString(config_data.c_str());
+    //_cfg.saveString(config_data);
+    cout << "Model_AB.cc_32\t" << _cfg.a() << endl;
+    cout << "Model_AB.cc_34\t" << _cfg.get_grid_init_type_string() << endl;
     bool is_changeSize = _cfg.get_bool("string", "is_changeSize");
     if(is_changeSize)
         release_memory();
@@ -35,7 +39,39 @@ void Model_AB::resetInString(string config_data, int Lx, int Ly, int Lz, blitz::
         delete wA;
         delete wB;
     }
-    _cfg.reload_from_file(config_data);
+    //_cfg.reload_from_file(config_data);
+    waa.resize(Lx, Ly, Lz);
+    wbb.resize(Lx, Ly, Lz);
+    waa = w1;
+    wbb = w2;
+    if(is_changeSize)
+        init();
+    else 
+        init_field();
+}*/
+void Model_AB::resetInString(blitz::Array<double, 1>size, int s, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2){
+    _cfg.set_grid_init_type(GridInitType::DATA_INIT);
+    switch (_cfg.dim()) {
+            case 1:
+                _cfg.a(size(s)); 
+                break;
+            case 2:                     //size of 2nd dim is constant
+                _cfg.a(size(s)); 
+                break;
+            case 3:                     //size of 1st&3rd dim are constant
+                _cfg.b(size(s));
+                break;
+            default :
+                cout << "Please input correct dimension !" << endl;
+                break;
+        }
+    bool is_changeSize = _cfg.get_bool("string", "is_changeSize");
+    if(is_changeSize)
+        release_memory();
+    else {
+        delete wA;
+        delete wB;
+    }
     waa.resize(Lx, Ly, Lz);
     wbb.resize(Lx, Ly, Lz);
     waa = w1;
@@ -48,7 +84,6 @@ void Model_AB::resetInString(string config_data, int Lx, int Ly, int Lz, blitz::
 
 void Model_AB::init(){
     is_compressible = _cfg.is_compressible();
-
     vec vf = _cfg.f();
     fA = vf(0);
     fB = vf(1);

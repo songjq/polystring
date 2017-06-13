@@ -53,6 +53,7 @@ public:
 
     void init();
     void reset(const string& config_data);
+    void resetInStringABC(int s, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2, blitz::Array<double, 3> &w3);
 
     void update();
     double Hw() const;
@@ -70,9 +71,9 @@ public:
     void save_field(const string file);
     void save_density(const string file);
     void save_q(const string file);
-    void input_AField(blitz::Array<double, 3>); //added by songjq for string method in 20161008
-    void input_BField(blitz::Array<double, 3>); //added by songjq for string method in 20161008
-    void input_CField(blitz::Array<double, 3>); //added by songjq for string method in 20161008
+    //void input_AField(blitz::Array<double, 3>); //added by songjq for string method in 20161008
+    //void input_BField(blitz::Array<double, 3>); //added by songjq for string method in 20161008
+    //void input_CField(blitz::Array<double, 3>); //added by songjq for string method in 20161008
     void release_memory_string();  //to be compatible with Model_AB
 
     ~Model_AB_C();
@@ -103,9 +104,7 @@ private:
     double lamA, lamB, lamC, lamYita;
     double LamA, LamB, LamC; // coefficients for short-range potential
     arma::uword sA, sB, sC;   //here sA+sB and sC means length of free and brush chains
-    blitz::Array<double, 3> waa; //added by songjq for string method in 20161008
-    blitz::Array<double, 3> wbb; //added by songjq for string method in 20161008
-    blitz::Array<double, 3> wcc; //added by songjq for string method in 20161008
+    blitz::Array<double, 3> waa, wbb, wcc; //added by songjq for string method in 20161008
 
     Field *wA, *wB, *wC, *wH;     // will not be initialized for Anderson mixing, *wH timed multiplied by a different factors is short-range potential for A, B, C
     FieldAX *wAx, *wBx, *wCx;   // will not be initialized for non-Anderson mixing

@@ -20,6 +20,20 @@ void Model_AB_C::reset(const string& config_data){
     init();
 }
 
+void Model_AB_C::resetInStringABC(int s, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2, blitz::Array<double, 3> &w3){
+    _cfg.set_grid_init_type(GridInitType::DATA_INIT);
+    delete wA;
+    delete wB;
+    delete wC;
+    waa.resize(Lx, Ly, Lz);
+    wbb.resize(Lx, Ly, Lz);
+    wcc.resize(Lx, Ly, Lz);
+    waa = w1;
+    wbb = w2;
+    wcc = w3;
+    init_field();
+}
+
 void Model_AB_C::init(){
 	blitz::Range all = blitz::Range::all();
     is_compressible = _cfg.is_compressible();
@@ -27,6 +41,9 @@ void Model_AB_C::init(){
     LamA = _cfg.get_double("Model","LamA");
     LamB = _cfg.get_double("Model","LamB");
     LamC = _cfg.get_double("Model","LamC");
+    LamA = 0;
+    LamB = 0;
+    LamC = 0;
 
     vec vf = _cfg.f();
     fA = vf(0);
@@ -144,7 +161,6 @@ void Model_AB_C::update(){
         default:
             break;
     }
-
     qC->update(*wC);
     QAB = qB->Qt();
     phiA->set_cc((1.0-fC)/QAB); //QAB should be ignored for better convergence
@@ -665,7 +681,7 @@ void Model_AB_C::init_pattern_field(){
     }
 }
 
-void Model_AB_C::input_AField(blitz::Array<double, 3> data) {
+/*void Model_AB_C::input_AField(blitz::Array<double, 3> data) {
     waa.resize(_cfg.Lx(), _cfg.Ly(), _cfg.Lz());
     waa = data;
 }
@@ -678,7 +694,7 @@ void Model_AB_C::input_BField(blitz::Array<double, 3> data) {
 void Model_AB_C::input_CField(blitz::Array<double, 3> data) {
     wcc.resize(_cfg.Lx(), _cfg.Ly(), _cfg.Lz());
     wcc = data;
-}
+}*/
 
 void Model_AB_C::init_data_field() {
     wA = new Field("wA", _cfg, waa, lamA);
@@ -701,8 +717,7 @@ void Model_AB_C::init_field(){
             init_pattern_field();
             break;
         case GridInitType::DATA_INIT:  // added by songjq for string method in 20161008
-            cout << "Data initialization now!" << endl;
-            //init_data_field();
+            init_data_field();
             break;    
         default:
             cerr<<"Unkonwn or unsupported grid init type!"<<endl;

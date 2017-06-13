@@ -47,11 +47,14 @@ Array<double, 4> input_data4(string, string);
 
 int m; //number of beads on string.
 int maxT; //max iteration of string.
+int save_string_interval;
 Array<double, 2> S; //string nodes
 Array<double, 2> H; //free energy of each node.
 Array<double, 2> dH; //energy difference between two string iteration of each notes
 Array<double, 1> F; //whole free energy of one string
+Array<double, 3> w1, w2, w3;
 Array<double, 4> wa, wb, wc, phia, phib, phic; //field and density data in each string node.
+Array<double, 4> wae, wbe, wce, phiae, phibe, phice; //store ends data
 int Nxx;    //grid size
 int Nyy;
 int Nzz;
@@ -65,6 +68,7 @@ int main(int argc, char* argv[]){
     Config cfg(config_file.c_str());
     m = cfg.get_integer("string","num_of_beads");
     maxT = cfg.get_integer("string","string_iteration");
+    save_string_interval = cfg.get_integer("string","save_string_interval");
     is_readString = cfg.get_bool("string", "is_readString");
     thresh_string_H = cfg.get_double("string", "thresh_string_H");
     S.resize(maxT, m);
@@ -91,13 +95,21 @@ void run_string(string config_file) {
 	Nxx = cfg.Lx();
 	Nyy = cfg.Ly();
 	Nzz = cfg.Lz();
+    w1.resize(Nxx, Nyy, Nzz);
+    w2.resize(Nxx, Nyy, Nzz);
+    w3.resize(Nxx, Nyy, Nzz);
 	wa.resize(m, Nxx, Nyy, Nzz);
 	wb.resize(m, Nxx, Nyy, Nzz);
     wc.resize(m, Nxx, Nyy, Nzz);
 	phia.resize(m, Nxx, Nyy, Nzz);
 	phib.resize(m, Nxx, Nyy, Nzz);
     phic.resize(m, Nxx, Nyy, Nzz);
-
+    wae.resize(2, Nxx, Nyy, Nzz);
+	wbe.resize(2, Nxx, Nyy, Nzz);
+	wce.resize(2, Nxx, Nyy, Nzz);
+	phiae.resize(2, Nxx, Nyy, Nzz);
+	phibe.resize(2, Nxx, Nyy, Nzz);
+	phice.resize(2, Nxx, Nyy, Nzz);
 	initialize_string();
     do {
         cout << "**************************************************" << endl;
@@ -111,9 +123,10 @@ void run_string(string config_file) {
         cout << "dH = " << dH(st, all) << endl;
         cout << "F = " << F(st) << endl;
         parameterize_string(st);
-        save_data();
         cout << "S = " << S(st, all) << endl;
         redistribute_stringBeads(st);
+        if(st % save_string_interval == 0)
+        	save_data();
         st += 1;
     }
     while(max(dH(st-1, all)) > thresh_string_H && st<maxT);
@@ -188,6 +201,19 @@ void initialize_string() {
             phic(i, all, all, all) = phic(0, all, all, all) + 1.0*i/(m-1)* (phic(m-1, all, all, all) - phic(0, all, all, all));
     	}
     }
+    cout << "store ends data now...\n";
+    wae(0, all, all, all) = wa(0, all, all, all);
+    wbe(0, all, all, all) = wb(0, all, all, all);
+    wce(0, all, all, all) = wc(0, all, all, all);
+    phiae(0, all, all, all) = phia(0, all, all, all);
+    phibe(0, all, all, all) = phib(0, all, all, all);
+    phice(0, all, all, all) = phic(0, all, all, all);
+    wae(1, all, all, all) = wa(m-1, all, all, all);
+    wbe(1, all, all, all) = wb(m-1, all, all, all);
+    wce(1, all, all, all) = wc(m-1, all, all, all);
+    phiae(1, all, all, all) = phia(m-1, all, all, all);
+    phibe(1, all, all, all) = phib(m-1, all, all, all);
+    phice(1, all, all, all) = phic(m-1, all, all, all);
 }
 
 void save_data() {
@@ -228,21 +254,16 @@ void save_data() {
 
 void run_scftInString(int st, string config_file) {  //scft calcuation along one string
 	blitz::Range all = blitz::Range::all();
-	//Config cfg(config_file.c_str());
-	//Model *pmodel;
-    //if(cfg.model() == ModelType::AB) {
-    //    pmodel = new Model_AB(config_file);
-    //}
 	for (int s=0; s<m; s++) {
+        w1 = wa(s,all,all,all);
+        w2 = wb(s,all,all,all);
+        w3 = wc(s,all,all,all);
+        pmodel->resetInStringABC(s, Nxx, Nyy, Nzz, w1, w2, w3);
 		cout << endl;
 		cout << "**************************************************" << endl;
 		cout << "scft running of " << s+1 << "th bead" << endl;
 		cout << "**************************************************" << endl;
 		cout << endl;
-		pmodel->input_AField(wa(s,all,all,all));  //field initialization of single scft calculation
-    	pmodel->input_BField(wb(s,all,all,all));
-        pmodel->input_CField(wc(s,all,all,all));
-    	pmodel->init_data_field();
     	scft sim(config_file, pmodel);
     	sim.run(); 
         H(st, s) = pmodel->H();
@@ -281,6 +302,7 @@ void parameterize_string(int st) {
 }
 
 void redistribute_stringBeads(int st) {
+	blitz::Range all = blitz::Range::all();
 	std::vector<double> X(m), Ya(m), Yb(m), Yc(m);  //for cublic spline interpolation
     tk::spline cs;  
     for (int i=0; i<Nxx; i++)
@@ -306,5 +328,17 @@ void redistribute_stringBeads(int st) {
             wc(z, i, j, k) = cs(1.0*z/(m-1));
           }
         }
-          
+    cout << "return ends data to string after interpolation...\n";
+    wa(0, all, all, all) = wae(0, all, all, all); //prevent polluting ends in the process of interpolation
+    wb(0, all, all, all) = wbe(0, all, all, all);
+    wc(0, all, all, all) = wce(0, all, all, all);
+    phia(0, all, all, all) = phiae(0, all, all, all);
+    phib(0, all, all, all) = phibe(0, all, all, all);
+    phic(0, all, all, all) = phice(0, all, all, all);
+    wa(m-1, all, all, all) = wae(1, all, all, all);
+    wb(m-1, all, all, all) = wbe(1, all, all, all);
+    wc(m-1, all, all, all) = wce(1, all, all, all);
+    phia(m-1, all, all, all) = phiae(1, all, all, all);
+    phib(m-1, all, all, all) = phibe(1, all, all, all);   
+    phic(m-1, all, all, all) = phice(1, all, all, all);  
 }

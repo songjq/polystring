@@ -54,7 +54,8 @@ public:
 
 	void init();
     void reset(const string& config_data);
-    void resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2);
+    //void resetInString(string config_data, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2);
+    void resetInString(blitz::Array<double, 1> size, int s, int Lx, int Ly, int Lz, blitz::Array<double, 3> &w1, blitz::Array<double, 3> &w2);
 
 	void update();
     double Hw() const;
@@ -99,6 +100,8 @@ private:
     double lamA, lamB, lamYita;
     arma::uword sA, sB;
     double fA_shiftvalue;  //added by songjq in 20141103
+    int s;  //index of the string
+    blitz::Array<double, 1> size; //physical size of the nodes along the string
     blitz::Array<double, 3> waa, wbb; //added by songjq for string method in 20161001
 
     Field *wA, *wB;     // will not be initialized for Anderson mixing
